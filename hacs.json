@@ -1,0 +1,8 @@
+{
+  "name": "Luxtronik WS",
+  "iot_class": "Local Polling",
+  "homeassistant": "2023.9.3",
+  "hide_default_branch": true,
+  "zip_release": false,
+  "filename": "luxtronikws.zip"
+}

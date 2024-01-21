@@ -1,0 +1,17 @@
+{
+  "domain": "luxtronikws",
+  "name": "Luxtronik WS",
+  "codeowners": [
+    "@j0eyd0ey39"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/j0eyd0ey39/luxtronikws/blob/main/README.md",
+  "homekit": {},
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "version": "0.1.0",
+  "requirements": ["websockets>=11.0.1"],
+  "ssdp": [],
+  "zeroconf": []
+}
