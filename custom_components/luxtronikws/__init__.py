@@ -16,6 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Luxtronik WS from a config entry."""
+    _LOGGER.info("async setup entry called, title:" + entry.title)
     hass.data.setdefault(DOMAIN, {})
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -24,4 +25,5 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    _LOGGER.info("async unload entry called, title:" + entry.title)
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
