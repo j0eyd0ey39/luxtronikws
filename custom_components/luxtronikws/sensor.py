@@ -18,9 +18,9 @@ from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
 )
 
-from config.custom_components.luxtronikws.coordinator import LuxtronikCoordinator
+from .coordinator import LuxtronikCoordinator
 
-from config.custom_components.luxtronikws.const import (
+from .const import (
     DOMAIN,
 )
 

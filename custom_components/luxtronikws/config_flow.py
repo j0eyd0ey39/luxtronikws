@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
-from config.custom_components.luxtronikws.const import DOMAIN, DEFAULT_SCAN_INTERVAL, MIN_SCAN_INTERVAL
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, MIN_SCAN_INTERVAL
 import websockets
 import xml.etree.ElementTree as ET
 

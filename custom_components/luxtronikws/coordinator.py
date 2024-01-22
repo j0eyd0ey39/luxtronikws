@@ -1,4 +1,4 @@
-from config.custom_components.luxtronikws.config_flow import getWebsocket
+from .config_flow import getWebsocket
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
