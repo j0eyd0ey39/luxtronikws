@@ -9,7 +9,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfTemperature, PERCENTAGE
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.config_entries import ConfigEntry
@@ -17,13 +17,10 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
 )
-from homeassistant.helpers.device_registry import (
-    async_get as dr_async_get,
-)
 
-from . import coordinator
+from config.custom_components.luxtronikws.coordinator import LuxtronikCoordinator
 
-from .const import (
+from config.custom_components.luxtronikws.const import (
     DOMAIN,
 )
 
@@ -35,10 +32,10 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    _LOGGER.info("async setup entry called, title:" + config_entry.title)
+    _LOGGER.info("sensor async setup entry called, title:" + config_entry.title)
     # Set up the sensor platform.
 
-    localCoordinator = coordinator.LuxtronikCoordinator(
+    localCoordinator = LuxtronikCoordinator(
         hass,
         config_entry.data["server"],
         config_entry.data["password"],
