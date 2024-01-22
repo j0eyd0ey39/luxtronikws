@@ -2,7 +2,7 @@
 
 This is an attempt at polling Luxtronik over websocket to Home Assistant.
 
-It doesn't currently work. Async setup isn't getting called.
+It probably only works with AIT fw version 3.88.x.
 
 # installation
 

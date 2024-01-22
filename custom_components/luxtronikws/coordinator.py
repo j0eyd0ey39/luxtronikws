@@ -82,23 +82,29 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
 #        capacityName = list(listed[8])[0].text
 #        capacityValue = list(listed[8])[1].text
 
-        root = self.data["temperatures"]
-        listed = list(root)
-        tempEntities = []
+        listed = list(self.data["temperatures"])
+        tempDicts = []
         i = 0
         for item in listed:
             sublist = list(item)
             if len(sublist) == 2:
-                tempEntities.append({"type": typeValue, "sw": swValue, "name": sublist[0].text, "index": i, "group": "temperatures" })
+                tempDicts.append({"type": typeValue, "sw": swValue, "name": sublist[0].text, "index": i, "group": "temperatures" })
 
             i = i + 1
 
-        root = self.data["inputs"]
-        listed = list(root)
-        inputEntities = []
+        listed = list(self.data["inputs"])
+        pressureDicts = []
         press1Name = list(listed[4])[0].text
         press2Name = list(listed[5])[0].text
-        inputEntities.append({"type": typeValue, "sw": swValue, "name": press1Name, "index": 4, "group": "inputs" })
-        inputEntities.append({"type": typeValue, "sw": swValue, "name": press2Name, "index": 5, "group": "inputs" })
+        pressureDicts.append({"type": typeValue, "sw": swValue, "name": press1Name, "index": 4, "group": "inputs" })
+        pressureDicts.append({"type": typeValue, "sw": swValue, "name": press2Name, "index": 5, "group": "inputs" })
 
-        return tempEntities, inputEntities
+        listed = list(self.data["outputs"])
+        frequencyDicts = []
+        frequencyDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[10])[0].text, "index": 10, "group": "outputs" })
+        percentageDicts = []
+        percentageDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[12])[0].text, "index": 12, "group": "outputs" })
+        percentageDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[13])[0].text, "index": 13, "group": "outputs" })
+
+
+        return tempDicts, pressureDicts, frequencyDicts, percentageDicts

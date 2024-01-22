@@ -9,7 +9,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfTemperature, UnitOfPressure
+from homeassistant.const import UnitOfTemperature, UnitOfPressure, UnitOfFrequency, PERCENTAGE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.config_entries import ConfigEntry
@@ -42,13 +42,17 @@ async def async_setup_entry(
         config_entry.data["update_interval"],
     )
     await localCoordinator.async_config_entry_first_refresh()
-    tempDicts, inputDicts = localCoordinator.listEntities()
+    tempDicts, pressureDicts, frequencyDicts, percentageDicts = localCoordinator.listEntities()
 
     entities = []
     for dict in tempDicts:
         entities.append(LuxtronikTemperatureEntity(dict, localCoordinator, hass))
-    for dict in inputDicts:
+    for dict in pressureDicts:
         entities.append(LuxtronikPressureEntity(dict, localCoordinator, hass))
+    for dict in frequencyDicts:
+        entities.append(LuxtronikFrequencyEntity(dict, localCoordinator, hass))
+    for dict in percentageDicts:
+        entities.append(LuxtronikPercentageEntity(dict, localCoordinator, hass))
 
     async_add_entities(entities)
 
@@ -83,8 +87,6 @@ class LuxtronikTemperatureEntity(SensorEntity, CoordinatorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 2
         _LOGGER.debug("Luxtronik entity "+entityDict["name"] +" created created")
-
-
 
     @property
     def unique_id(self) -> str | None:
@@ -137,3 +139,27 @@ class LuxtronikPressureEntity(LuxtronikTemperatureEntity):
         self._attr_device_class = SensorDeviceClass.PRESSURE
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 4
+
+class LuxtronikFrequencyEntity(LuxtronikTemperatureEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = UnitOfFrequency.HERTZ
+        self._attr_device_class = SensorDeviceClass.FREQUENCY
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_suffix_len = 3
+
+class LuxtronikPercentageEntity(LuxtronikTemperatureEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_device_class = None
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_suffix_len = 2
