@@ -84,13 +84,21 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
 
         root = self.data["temperatures"]
         listed = list(root)
-        entities = []
+        tempEntities = []
         i = 0
         for item in listed:
             sublist = list(item)
             if len(sublist) == 2:
-                entities.append({"type": typeValue, "sw": swValue, "name": sublist[0].text, "index": i, "group": "temperatures" })
+                tempEntities.append({"type": typeValue, "sw": swValue, "name": sublist[0].text, "index": i, "group": "temperatures" })
 
             i = i + 1
 
-        return entities
+        root = self.data["inputs"]
+        listed = list(root)
+        inputEntities = []
+        press1Name = list(listed[4])[0].text
+        press2Name = list(listed[5])[0].text
+        inputEntities.append({"type": typeValue, "sw": swValue, "name": press1Name, "index": 4, "group": "inputs" })
+        inputEntities.append({"type": typeValue, "sw": swValue, "name": press2Name, "index": 5, "group": "inputs" })
+
+        return tempEntities, inputEntities

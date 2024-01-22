@@ -9,7 +9,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import UnitOfTemperature, UnitOfPressure
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.config_entries import ConfigEntry
@@ -42,11 +42,13 @@ async def async_setup_entry(
         config_entry.data["update_interval"],
     )
     await localCoordinator.async_config_entry_first_refresh()
-    entityDicts = localCoordinator.listEntities()
+    tempDicts, inputDicts = localCoordinator.listEntities()
 
     entities = []
-    for dict in entityDicts:
-        entities.append(LuxtronikEntity(dict, localCoordinator, hass))
+    for dict in tempDicts:
+        entities.append(LuxtronikTemperatureEntity(dict, localCoordinator, hass))
+    for dict in inputDicts:
+        entities.append(LuxtronikPressureEntity(dict, localCoordinator, hass))
 
     async_add_entities(entities)
 
@@ -60,7 +62,7 @@ async def async_setup_entry(
         + str(config_entry.data["update_interval"])
     )
 
-class LuxtronikEntity(SensorEntity, CoordinatorEntity):
+class LuxtronikTemperatureEntity(SensorEntity, CoordinatorEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
         self, entityDict, coordinator, hass: HomeAssistant
@@ -76,29 +78,35 @@ class LuxtronikEntity(SensorEntity, CoordinatorEntity):
         self._attr_has_entity_name = True
         self._attr_name = entityDict["name"]
         self._attr_friendly_name = entityDict["name"]
+        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+        self._attr_device_class = SensorDeviceClass.TEMPERATURE
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_suffix_len = 2
         _LOGGER.debug("Luxtronik entity "+entityDict["name"] +" created created")
 
-    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
-    _attr_device_class = SensorDeviceClass.TEMPERATURE
-    _attr_state_class = SensorStateClass.MEASUREMENT
+
 
     @property
     def unique_id(self) -> str | None:
         return self._attr_device_id + str(self._attr_index)
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
+    def stripSuffix(self) -> str:
+        """strip extra characters from data"""
         root = self.coordinator.data[self._attr_group]
         listed = list(root)
         item = listed[self._attr_index]
         valuestr = list(item)[1].text
-        valuestr = valuestr[:len(valuestr)-2]
+        valuestr = valuestr[:len(valuestr)-self._attr_suffix_len]
         point = locale.localeconv()["decimal_point"]
         valuestr.replace(".", point)
         valuestr.replace(",", point)
+        return valuestr
 
-        self._attr_native_value = valuestr
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._attr_native_value = self.stripSuffix()
         _LOGGER.debug("Luxtronik sensor polled")
         self.async_write_ha_state()
 
@@ -118,3 +126,14 @@ class LuxtronikEntity(SensorEntity, CoordinatorEntity):
             sw_version=self._attr_sw_version,
         )
 
+class LuxtronikPressureEntity(LuxtronikTemperatureEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = UnitOfPressure.BAR
+        self._attr_device_class = SensorDeviceClass.PRESSURE
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_suffix_len = 4
