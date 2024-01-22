@@ -2,7 +2,7 @@
 
 This is an attempt at polling Luxtronik over websocket to Home Assistant.
 
-It doesn't currently work.
+It doesn't currently work. Async setup isn't getting called.
 
 # installation
 
