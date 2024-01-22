@@ -9,7 +9,14 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfTemperature, UnitOfPressure, UnitOfFrequency, PERCENTAGE
+from homeassistant.const import (
+    UnitOfTemperature,
+    UnitOfPressure,
+    UnitOfFrequency,
+    PERCENTAGE,
+    UnitOfPower,
+    UnitOfEnergy)
+
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.config_entries import ConfigEntry
@@ -42,7 +49,7 @@ async def async_setup_entry(
         config_entry.data["update_interval"],
     )
     await localCoordinator.async_config_entry_first_refresh()
-    tempDicts, pressureDicts, frequencyDicts, percentageDicts = localCoordinator.listEntities()
+    tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts = localCoordinator.listEntities()
 
     entities = []
     for dict in tempDicts:
@@ -53,6 +60,10 @@ async def async_setup_entry(
         entities.append(LuxtronikFrequencyEntity(dict, localCoordinator, hass))
     for dict in percentageDicts:
         entities.append(LuxtronikPercentageEntity(dict, localCoordinator, hass))
+    for dict in powerDicts:
+        entities.append(LuxtronikPowerEntity(dict, localCoordinator, hass))
+    for dict in energyDicts:
+        entities.append(LuxtronikEnergyEntity(dict, localCoordinator, hass))
 
     async_add_entities(entities)
 
@@ -163,3 +174,27 @@ class LuxtronikPercentageEntity(LuxtronikTemperatureEntity):
         self._attr_device_class = None
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 2
+
+class LuxtronikPowerEntity(LuxtronikTemperatureEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
+        self._attr_device_class = SensorDeviceClass.POWER
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_suffix_len = 3
+
+class LuxtronikEnergyEntity(LuxtronikTemperatureEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_suffix_len = 4
