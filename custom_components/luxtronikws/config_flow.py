@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import aiohttp
 
 from typing import Any
 
@@ -12,8 +11,6 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-
-from homeassistant.const import CONF_SCAN_INTERVAL
 
 from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, MIN_SCAN_INTERVAL
 import websockets
