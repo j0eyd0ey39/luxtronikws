@@ -57,6 +57,10 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
             result = await self._attr_ws.recv()
             outputsroot = ET.fromstring(result)
 
+            await self._attr_ws.send("GET;"+listedItems[4].attrib["id"])
+            result = await self._attr_ws.recv()
+            timesroot = ET.fromstring(result)
+
             await self._attr_ws.send("GET;"+listedItems[8].attrib["id"])
             result = await self._attr_ws.recv()
             deviceinforoot = ET.fromstring(result)
@@ -72,11 +76,21 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
                 "inputs": inputsroot,
                 "outputs": outputsroot,
                 "deviceinfo": deviceinforoot,
+                "times": timesroot,
                 "energyOutputs": list(energyroot)[0],
                 "energyInputs": list(energyroot)[1],
             }
             # globber results to dict
             # return result data
+
+    def appendXMLListToDictList(self, typeValue, swValue, xmlList, dict, groupName):
+        i = 0
+        for item in xmlList:
+            sublist = list(item)
+            if len(sublist) == 2:
+                dict.append({"type": typeValue, "sw": swValue, "name": sublist[0].text, "index": i, "group": groupName })
+
+            i = i + 1
 
     def listEntities(self):
         root = self.data["deviceinfo"]
@@ -90,13 +104,7 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
 
         listed = list(self.data["temperatures"])
         tempDicts = []
-        i = 0
-        for item in listed:
-            sublist = list(item)
-            if len(sublist) == 2:
-                tempDicts.append({"type": typeValue, "sw": swValue, "name": sublist[0].text, "index": i, "group": "temperatures" })
-
-            i = i + 1
+        self.appendXMLListToDictList(typeValue, swValue, listed, tempDicts, "temperatures")
 
         listed = list(self.data["inputs"])
         pressureDicts = []
@@ -120,4 +128,8 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
         energyDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[2])[0].text+" (input)", "index": 2, "group": "energyInputs" })
         energyDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[3])[0].text+" (input)", "index": 3, "group": "energyInputs" })
 
-        return tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts
+        listed = list(self.data["times"])
+        timeDicts = []
+        self.appendXMLListToDictList(typeValue, swValue, listed, timeDicts, "times")
+
+        return tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts, timeDicts

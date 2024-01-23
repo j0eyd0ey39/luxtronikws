@@ -1,5 +1,6 @@
 """Platform for sensor integration."""
 from __future__ import annotations
+from datetime import datetime, timedelta
 import locale
 
 import logging
@@ -15,7 +16,8 @@ from homeassistant.const import (
     UnitOfFrequency,
     PERCENTAGE,
     UnitOfPower,
-    UnitOfEnergy)
+    UnitOfEnergy,
+    UnitOfTime)
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -49,7 +51,7 @@ async def async_setup_entry(
         config_entry.data["update_interval"],
     )
     await localCoordinator.async_config_entry_first_refresh()
-    tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts = localCoordinator.listEntities()
+    tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts, timeDicts = localCoordinator.listEntities()
 
     entities = []
     for dict in tempDicts:
@@ -64,6 +66,8 @@ async def async_setup_entry(
         entities.append(LuxtronikPowerEntity(dict, localCoordinator, hass))
     for dict in energyDicts:
         entities.append(LuxtronikEnergyEntity(dict, localCoordinator, hass))
+    for dict in timeDicts:
+        entities.append(LuxtronikTimeEntity(dict, localCoordinator, hass))
 
     async_add_entities(entities)
 
@@ -198,3 +202,27 @@ class LuxtronikEnergyEntity(LuxtronikTemperatureEntity):
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
         self._attr_suffix_len = 4
+
+class LuxtronikTimeEntity(LuxtronikTemperatureEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = UnitOfTime.SECONDS
+        self._attr_device_class = SensorDeviceClass.DURATION
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        root = self.coordinator.data[self._attr_group]
+        listed = list(root)
+        item = listed[self._attr_index]
+        time = list(item)[1].text
+        t = datetime.strptime(time,"%H:%M:%S")
+        delta = timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
+        self._attr_native_value = str(delta.total_seconds())
+        _LOGGER.debug("Luxtronik sensor polled")
+        self.async_write_ha_state()
