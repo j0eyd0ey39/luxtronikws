@@ -168,7 +168,16 @@ class LuxtronikFrequencyEntity(LuxtronikTemperatureEntity):
         self._attr_device_class = SensorDeviceClass.FREQUENCY
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 3
-        self._attr_force_update = True
+        self._attr_counter = 0
+    
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        point = locale.localeconv()["decimal_point"]
+        self._attr_counter = self._attr_counter + 1
+        self._attr_native_value = self.stripSuffix()+point+"000"+str(self._attr_counter % 2)
+        _LOGGER.debug("Luxtronik sensor polled")
+        self.async_write_ha_state()
 
 class LuxtronikPercentageEntity(LuxtronikTemperatureEntity):
     """Representation of a Luxtronik Device entity"""
