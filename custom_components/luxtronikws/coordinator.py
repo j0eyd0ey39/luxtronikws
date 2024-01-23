@@ -43,6 +43,12 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
         async with async_timeout.timeout(10):
             await self._ainit()
             # send ws queries for item ids
+            listedItems = list(list(self._attr_root)[1])
+
+            await self._attr_ws.send("GET;"+listedItems[2].attrib["id"])
+            result = await self._attr_ws.recv()
+            tempsettingsroot = ET.fromstring(result)
+
             listedItems = list(list(self._attr_root)[0])
 
             await self._attr_ws.send("GET;"+listedItems[1].attrib["id"])
@@ -79,6 +85,7 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
                 "times": timesroot,
                 "energyOutputs": list(energyroot)[0],
                 "energyInputs": list(energyroot)[1],
+                "tempSettings": tempsettingsroot,
             }
             # globber results to dict
             # return result data
@@ -100,11 +107,16 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
         stateName = list(listed[7])[0].text
         capacityName = list(listed[8])[0].text
 
+        stringDicts = [{"type": typeValue, "sw": swValue, "name": stateName, "index": 7, "group": "deviceinfo" }]
         powerDicts = [{"type": typeValue, "sw": swValue, "name": capacityName, "index": 8, "group": "deviceinfo" }]
+
 
         listed = list(self.data["temperatures"])
         tempDicts = []
         self.appendXMLListToDictList(typeValue, swValue, listed, tempDicts, "temperatures")
+
+        listed = list(self.data["tempSettings"])
+        tempDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[1])[0].text, "index": 1, "group": "tempSettings" })
 
         listed = list(self.data["inputs"])
         pressureDicts = []
@@ -132,4 +144,4 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
         timeDicts = []
         self.appendXMLListToDictList(typeValue, swValue, listed, timeDicts, "times")
 
-        return tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts, timeDicts
+        return tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts, timeDicts, stringDicts

@@ -51,7 +51,7 @@ async def async_setup_entry(
         config_entry.data["update_interval"],
     )
     await localCoordinator.async_config_entry_first_refresh()
-    tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts, timeDicts = localCoordinator.listEntities()
+    tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts, timeDicts, stringDicts = localCoordinator.listEntities()
 
     entities = []
     for dict in tempDicts:
@@ -68,6 +68,8 @@ async def async_setup_entry(
         entities.append(LuxtronikEnergyEntity(dict, localCoordinator, hass))
     for dict in timeDicts:
         entities.append(LuxtronikTimeEntity(dict, localCoordinator, hass))
+    for dict in stringDicts:
+        entities.append(LuxtronikStringEntity(dict, localCoordinator, hass))
 
     async_add_entities(entities)
 
@@ -203,6 +205,18 @@ class LuxtronikEnergyEntity(LuxtronikTemperatureEntity):
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
         self._attr_suffix_len = 4
 
+class LuxtronikStringEntity(LuxtronikTemperatureEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = None
+        self._attr_device_class = None
+        self._attr_state_class = None
+        self._attr_suffix_len = 0
+
 class LuxtronikTimeEntity(LuxtronikTemperatureEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
@@ -221,8 +235,8 @@ class LuxtronikTimeEntity(LuxtronikTemperatureEntity):
         listed = list(root)
         item = listed[self._attr_index]
         time = list(item)[1].text
-        t = datetime.strptime(time,"%H:%M:%S")
-        delta = timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
+        h, m, s = map(int, time.split(':'))
+        delta = timedelta(hours=h, minutes=m, seconds=s)
         self._attr_native_value = str(delta.total_seconds())
         _LOGGER.debug("Luxtronik sensor polled")
         self.async_write_ha_state()
