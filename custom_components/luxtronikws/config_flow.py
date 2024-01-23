@@ -13,6 +13,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, MIN_SCAN_INTERVAL
+from .lux_ip import getLuxIp
 import websockets
 import xml.etree.ElementTree as ET
 
@@ -103,13 +104,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 return self.async_create_entry(title=info["title"], data=user_input)
 
+        luxIp = await getLuxIp()
+
         dataSchema = vol.Schema(
             {
                 vol.Required(
                     "update_interval",
                     default=DEFAULT_SCAN_INTERVAL,
                 ): vol.All(vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL, max=900)),
-                vol.Required("server", default="192.168.86.39"): str,
+                vol.Required("server", default=luxIp): str,
                 vol.Required("password", default="998899"): str,
             }
         )
