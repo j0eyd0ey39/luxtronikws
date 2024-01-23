@@ -168,6 +168,7 @@ class LuxtronikFrequencyEntity(LuxtronikTemperatureEntity):
         self._attr_device_class = SensorDeviceClass.FREQUENCY
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 3
+        self._attr_force_update = True
 
 class LuxtronikPercentageEntity(LuxtronikTemperatureEntity):
     """Representation of a Luxtronik Device entity"""
