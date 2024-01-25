@@ -51,25 +51,29 @@ async def async_setup_entry(
         config_entry.data["update_interval"],
     )
     await localCoordinator.async_config_entry_first_refresh()
-    tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts, timeDicts, stringDicts = localCoordinator.listEntities()
+    dicts = localCoordinator.listEntities()
 
     entities = []
-    for dict in tempDicts:
+    for dict in dicts["tempDicts"]:
         entities.append(LuxtronikTemperatureEntity(dict, localCoordinator, hass))
-    for dict in pressureDicts:
+    for dict in dicts["pressureDicts"]:
         entities.append(LuxtronikPressureEntity(dict, localCoordinator, hass))
-    for dict in frequencyDicts:
+    for dict in dicts["frequencyDicts"]:
         entities.append(LuxtronikFrequencyEntity(dict, localCoordinator, hass))
-    for dict in percentageDicts:
+    for dict in dicts["percentageDicts"]:
         entities.append(LuxtronikPercentageEntity(dict, localCoordinator, hass))
-    for dict in powerDicts:
+    for dict in dicts["powerDicts"]:
         entities.append(LuxtronikPowerEntity(dict, localCoordinator, hass))
-    for dict in energyDicts:
+    for dict in dicts["energyDicts"]:
         entities.append(LuxtronikEnergyEntity(dict, localCoordinator, hass))
-    for dict in timeDicts:
+    for dict in dicts["timeDicts"]:
         entities.append(LuxtronikTimeEntity(dict, localCoordinator, hass))
-    for dict in stringDicts:
+    for dict in dicts["stringDicts"]:
         entities.append(LuxtronikStringEntity(dict, localCoordinator, hass))
+    for dict in dicts["counterDicts"]:
+        entities.append(LuxtronikCounterEntity(dict, localCoordinator, hass))
+    for dict in dicts["hourDicts"]:
+        entities.append(LuxtronikHoursEntity(dict, localCoordinator, hass))
 
     async_add_entities(entities)
 
@@ -83,7 +87,7 @@ async def async_setup_entry(
         + str(config_entry.data["update_interval"])
     )
 
-class LuxtronikTemperatureEntity(SensorEntity, CoordinatorEntity):
+class LuxtronikEntity(SensorEntity, CoordinatorEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
         self, entityDict, coordinator, hass: HomeAssistant
@@ -99,11 +103,8 @@ class LuxtronikTemperatureEntity(SensorEntity, CoordinatorEntity):
         self._attr_has_entity_name = True
         self._attr_name = entityDict["name"]
         self._attr_friendly_name = entityDict["name"]
-        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
-        self._attr_device_class = SensorDeviceClass.TEMPERATURE
-        self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_suffix_len = 2
-        _LOGGER.debug("Luxtronik entity "+entityDict["name"] +" created created")
+        self._attr_suffix_len = 0
+        _LOGGER.debug("Luxtronik entity "+entityDict["name"] +" created")
 
     @property
     def unique_id(self) -> str | None:
@@ -145,7 +146,20 @@ class LuxtronikTemperatureEntity(SensorEntity, CoordinatorEntity):
             sw_version=self._attr_sw_version,
         )
 
-class LuxtronikPressureEntity(LuxtronikTemperatureEntity):
+class LuxtronikTemperatureEntity(LuxtronikEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+        self._attr_device_class = SensorDeviceClass.TEMPERATURE
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_suffix_len = 2
+        _LOGGER.debug("Luxtronik entity "+entityDict["name"] +" created")
+
+class LuxtronikPressureEntity(LuxtronikEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
         self, entityDict, coordinator, hass: HomeAssistant
@@ -157,7 +171,7 @@ class LuxtronikPressureEntity(LuxtronikTemperatureEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 4
 
-class LuxtronikFrequencyEntity(LuxtronikTemperatureEntity):
+class LuxtronikFrequencyEntity(LuxtronikEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
         self, entityDict, coordinator, hass: HomeAssistant
@@ -168,18 +182,8 @@ class LuxtronikFrequencyEntity(LuxtronikTemperatureEntity):
         self._attr_device_class = SensorDeviceClass.FREQUENCY
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 3
-        self._attr_counter = 0
-    
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        point = locale.localeconv()["decimal_point"]
-        self._attr_counter = self._attr_counter + 1
-        self._attr_native_value = self.stripSuffix()+point+"000"+str(self._attr_counter % 2)
-        _LOGGER.debug("Luxtronik sensor polled")
-        self.async_write_ha_state()
 
-class LuxtronikPercentageEntity(LuxtronikTemperatureEntity):
+class LuxtronikPercentageEntity(LuxtronikEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
         self, entityDict, coordinator, hass: HomeAssistant
@@ -190,8 +194,9 @@ class LuxtronikPercentageEntity(LuxtronikTemperatureEntity):
         self._attr_device_class = None
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 2
+        self._attr_icon = "mdi:percent-box-outline"
 
-class LuxtronikPowerEntity(LuxtronikTemperatureEntity):
+class LuxtronikPowerEntity(LuxtronikEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
         self, entityDict, coordinator, hass: HomeAssistant
@@ -203,7 +208,7 @@ class LuxtronikPowerEntity(LuxtronikTemperatureEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 3
 
-class LuxtronikEnergyEntity(LuxtronikTemperatureEntity):
+class LuxtronikEnergyEntity(LuxtronikEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
         self, entityDict, coordinator, hass: HomeAssistant
@@ -215,7 +220,7 @@ class LuxtronikEnergyEntity(LuxtronikTemperatureEntity):
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
         self._attr_suffix_len = 4
 
-class LuxtronikStringEntity(LuxtronikTemperatureEntity):
+class LuxtronikStringEntity(LuxtronikEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
         self, entityDict, coordinator, hass: HomeAssistant
@@ -227,7 +232,7 @@ class LuxtronikStringEntity(LuxtronikTemperatureEntity):
         self._attr_state_class = None
         self._attr_suffix_len = 0
 
-class LuxtronikTimeEntity(LuxtronikTemperatureEntity):
+class LuxtronikTimeEntity(LuxtronikEntity):
     """Representation of a Luxtronik Device entity"""
     def __init__(
         self, entityDict, coordinator, hass: HomeAssistant
@@ -237,6 +242,7 @@ class LuxtronikTimeEntity(LuxtronikTemperatureEntity):
         self._attr_native_unit_of_measurement = UnitOfTime.SECONDS
         self._attr_device_class = SensorDeviceClass.DURATION
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_icon = "mdi:clock-digital"
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -245,8 +251,41 @@ class LuxtronikTimeEntity(LuxtronikTemperatureEntity):
         listed = list(root)
         item = listed[self._attr_index]
         time = list(item)[1].text
-        h, m, s = map(int, time.split(':'))
+        if time.count(':') == 1:
+            h, m = map(int, time.split(':'))
+            s = 0
+        else:
+            h, m, s = map(int, time.split(':'))
+
         delta = timedelta(hours=h, minutes=m, seconds=s)
         self._attr_native_value = str(delta.total_seconds())
         _LOGGER.debug("Luxtronik sensor polled")
         self.async_write_ha_state()
+
+class LuxtronikHoursEntity(LuxtronikEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = UnitOfTime.HOURS
+        self._attr_suggested_unit_of_measurement = UnitOfTime.HOURS
+        self._attr_suggested_display_precision = 0
+        self._attr_device_class = None
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_suffix_len = 1
+        self._attr_icon = "mdi:counter"
+
+class LuxtronikCounterEntity(LuxtronikEntity):
+    """Representation of a Luxtronik Device entity"""
+    def __init__(
+        self, entityDict, coordinator, hass: HomeAssistant
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(entityDict, coordinator, hass)
+        self._attr_native_unit_of_measurement = None
+        self._attr_device_class = None
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_suffix_len = 0
+        self._attr_icon = "mdi:counter"

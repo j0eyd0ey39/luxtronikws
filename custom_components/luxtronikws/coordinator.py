@@ -67,6 +67,10 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
             result = await self._attr_ws.recv()
             timesroot = ET.fromstring(result)
 
+            await self._attr_ws.send("GET;"+listedItems[5].attrib["id"])
+            result = await self._attr_ws.recv()
+            hoursroot = ET.fromstring(result)
+
             await self._attr_ws.send("GET;"+listedItems[8].attrib["id"])
             result = await self._attr_ws.recv()
             deviceinforoot = ET.fromstring(result)
@@ -83,6 +87,7 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
                 "outputs": outputsroot,
                 "deviceinfo": deviceinforoot,
                 "times": timesroot,
+                "hours": hoursroot,
                 "energyOutputs": list(energyroot)[0],
                 "energyInputs": list(energyroot)[1],
                 "tempSettings": tempsettingsroot,
@@ -90,11 +95,11 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
             # globber results to dict
             # return result data
 
-    def appendXMLListToDictList(self, typeValue, swValue, xmlList, dict, groupName):
+    def appendXMLListToDictList(self, typeValue, swValue, xmlList, dict, groupName, *args):
         i = 0
         for item in xmlList:
             sublist = list(item)
-            if len(sublist) == 2:
+            if len(sublist) == 2 and (len(args) == 0 or sublist[1].text.endswith(args[0])):
                 dict.append({"type": typeValue, "sw": swValue, "name": sublist[0].text, "index": i, "group": groupName })
 
             i = i + 1
@@ -144,4 +149,21 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
         timeDicts = []
         self.appendXMLListToDictList(typeValue, swValue, listed, timeDicts, "times")
 
-        return tempDicts, pressureDicts, frequencyDicts, percentageDicts, powerDicts, energyDicts, timeDicts, stringDicts
+        listed = list(self.data["hours"])
+        hourDicts = []
+        self.appendXMLListToDictList(typeValue, swValue, listed, hourDicts, "hours", "h")
+        timeDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[2])[0].text, "index": 2, "group": "hours" })
+        counterDicts = [{"type": typeValue, "sw": swValue, "name": list(listed[1])[0].text, "index": 1, "group": "hours" }]
+
+        return {
+            "tempDicts": tempDicts,
+            "pressureDicts": pressureDicts,
+            "frequencyDicts": frequencyDicts,
+            "percentageDicts": percentageDicts,
+            "powerDicts": powerDicts,
+            "energyDicts": energyDicts,
+            "timeDicts": timeDicts,
+            "stringDicts": stringDicts,
+            "hourDicts": hourDicts,
+            "counterDicts": counterDicts
+        }
