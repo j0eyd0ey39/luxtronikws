@@ -194,7 +194,7 @@ class LuxtronikPercentageEntity(LuxtronikEntity):
         self._attr_device_class = None
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_suffix_len = 2
-        self._attr_icon = "mdi:percent-box-outline"
+        self._attr_icon = "mdi:pump" # the only known instances of luxtronik percentage entities are pumps
 
 class LuxtronikPowerEntity(LuxtronikEntity):
     """Representation of a Luxtronik Device entity"""

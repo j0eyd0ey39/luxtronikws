@@ -95,7 +95,7 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
             # globber results to dict
             # return result data
 
-    def appendXMLListToDictList(self, typeValue, swValue, xmlList, dict, groupName, *args):
+    def appendXMLListToDictList(self, typeValue, swValue, xmlList, dict, groupName, maxIndex=99, *args):
         i = 0
         for item in xmlList:
             sublist = list(item)
@@ -103,6 +103,8 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
                 dict.append({"type": typeValue, "sw": swValue, "name": sublist[0].text, "index": i, "group": groupName })
 
             i = i + 1
+            if i > maxIndex:
+                return
 
     def listEntities(self):
         root = self.data["deviceinfo"]
@@ -113,8 +115,8 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
         capacityName = list(listed[8])[0].text
 
         stringDicts = [{"type": typeValue, "sw": swValue, "name": stateName, "index": 7, "group": "deviceinfo" }]
-        powerDicts = [{"type": typeValue, "sw": swValue, "name": capacityName, "index": 8, "group": "deviceinfo" }]
 
+        powerDicts = [{"type": typeValue, "sw": swValue, "name": capacityName, "index": 8, "group": "deviceinfo" }]
 
         listed = list(self.data["temperatures"])
         tempDicts = []
@@ -122,17 +124,20 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
 
         listed = list(self.data["tempSettings"])
         tempDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[1])[0].text, "index": 1, "group": "tempSettings" })
+        tempDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[2])[0].text, "index": 2, "group": "tempSettings" })
 
         listed = list(self.data["inputs"])
         pressureDicts = []
         pressureDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[4])[0].text, "index": 4, "group": "inputs" })
         pressureDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[5])[0].text, "index": 5, "group": "inputs" })
+        self.appendXMLListToDictList(typeValue, swValue, listed, stringDicts, "inputs", 3)
 
         listed = list(self.data["outputs"])
         frequencyDicts = [{"type": typeValue, "sw": swValue, "name": list(listed[10])[0].text, "index": 10, "group": "outputs" }]
         percentageDicts = []
         percentageDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[12])[0].text, "index": 12, "group": "outputs" })
         percentageDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[13])[0].text, "index": 13, "group": "outputs" })
+        self.appendXMLListToDictList(typeValue, swValue, listed, stringDicts, "outputs", 9)
 
         listed = list(self.data["energyOutputs"])
         energyDicts = []
@@ -151,7 +156,7 @@ class LuxtronikCoordinator(DataUpdateCoordinator):
 
         listed = list(self.data["hours"])
         hourDicts = []
-        self.appendXMLListToDictList(typeValue, swValue, listed, hourDicts, "hours", "h")
+        self.appendXMLListToDictList(typeValue, swValue, listed, hourDicts, "hours", 99, "h")
         timeDicts.append({"type": typeValue, "sw": swValue, "name": list(listed[2])[0].text, "index": 2, "group": "hours" })
         counterDicts = [{"type": typeValue, "sw": swValue, "name": list(listed[1])[0].text, "index": 1, "group": "hours" }]
 
